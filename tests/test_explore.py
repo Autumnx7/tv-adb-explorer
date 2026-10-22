@@ -40,17 +40,17 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='tv test ') as tmp:
             p=Path(tmp); args=self.args(p)
             self.assertEqual(self.execute(args,[decision(),decision('DONE',page='settings')]),0)
-            s=json.loads((p/'state.json').read_text()); self.assertEqual(len(s['history']),2)
+            s=json.loads((p/'state.json').read_text(encoding='utf-8')); self.assertEqual(len(s['history']),2)
             self.assertTrue((p/'index.html').is_file()); self.assertFalse((p/'run.lock').exists())
             self.execute(args,[decision('DONE')])
-            s=json.loads((p/'state.json').read_text()); self.assertEqual(len(s['history']),3)
+            s=json.loads((p/'state.json').read_text(encoding='utf-8')); self.assertEqual(len(s['history']),3)
             self.assertTrue(s['history'][-1]['resumed'])
             self.assertEqual(s['history'][-1]['step'],3)
     def test_blocked_does_not_end_other_branches(self):
         d=decision('OK'); d.update(status='blocked',block_reason='login required')
         with tempfile.TemporaryDirectory() as tmp:
             self.execute(self.args(tmp),[d,decision('DONE',page='other')])
-            s=json.loads((Path(tmp)/'state.json').read_text())
+            s=json.loads((Path(tmp)/'state.json').read_text(encoding='utf-8'))
             self.assertEqual(s['history'][0]['action'],'BACK')
             self.assertEqual(len(s['history']),2)
     def test_unsafe_ok_and_unknown_foreground(self):
@@ -66,13 +66,13 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             args=self.args(tmp); args.max_steps=5
             self.assertEqual(self.execute(args,[decision(),RuntimeError('quota'),RuntimeError('quota'),RuntimeError('quota')]),2)
-            s=json.loads((Path(tmp)/'state.json').read_text()); self.assertEqual(len(s['history']),1)
+            s=json.loads((Path(tmp)/'state.json').read_text(encoding='utf-8')); self.assertEqual(len(s['history']),1)
             self.assertIn('infrastructure_error',s['status']); self.assertTrue((Path(tmp)/'REPORT.md').exists())
     def test_stop_and_lock(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp); (p/'STOP').touch()
             self.execute(self.args(tmp),[])
-            self.assertEqual(json.loads((p/'state.json').read_text())['status'],'stopped_by_user')
+            self.assertEqual(json.loads((p/'state.json').read_text(encoding='utf-8'))['status'],'stopped_by_user')
             (p/'run.lock').write_text('123')
             with self.assertRaises(RuntimeError): self.execute(self.args(tmp),[])
     def test_version_change_rejected(self):
@@ -83,8 +83,8 @@ class Tests(unittest.TestCase):
     def test_action_checkpoint_not_replayed(self):
         with tempfile.TemporaryDirectory() as tmp:
             args=self.args(tmp); self.execute(args,[decision('DONE')])
-            p=Path(tmp)/'state.json'; s=json.loads(p.read_text()); s['pending_action']={'action':'OK','step':1}; m.dump(p,s)
-            self.execute(args,[decision('DONE')]); s=json.loads(p.read_text())
+            p=Path(tmp)/'state.json'; s=json.loads(p.read_text(encoding='utf-8')); s['pending_action']={'action':'OK','step':1}; m.dump(p,s)
+            self.execute(args,[decision('DONE')]); s=json.loads(p.read_text(encoding='utf-8'))
             self.assertEqual(s['uncertain_action']['action'],'OK'); self.assertIsNone(s['pending_action'])
     def test_binary_capture_xml_missing(self):
         dev=m.Device('adb','serial')
