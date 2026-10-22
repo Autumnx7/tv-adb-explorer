@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+captures/
+runs/
+*.zip
+state.json
+device.json
+events.jsonl
+runner.*.log
